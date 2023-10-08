@@ -1,0 +1,38 @@
+Modify the dependencies of some libraries to avoid building clang tools
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+Previously, `libStaticMirror` and `libSwiftScan` depended on `clang`, but
+this forces a build of the clang tools. Changing to `clang-libraries` (or
+perhaps removing the dependency) seems like a better approach.
+---
+ tools/libStaticMirror/CMakeLists.txt |    2 +-
+ tools/libSwiftScan/CMakeLists.txt    |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/tools/libStaticMirror/CMakeLists.txt b/tools/libStaticMirror/CMakeLists.txt
+index a6ce8737..25453407 100644
+--- a/tools/libStaticMirror/CMakeLists.txt
++++ b/tools/libStaticMirror/CMakeLists.txt
+@@ -15,7 +15,7 @@ add_swift_host_library(libStaticMirror ${swift_mock_plugin_library_kind}
+   LLVM_LINK_COMPONENTS object support
+ )
+ if(NOT SWIFT_BUILT_STANDALONE AND NOT CMAKE_C_COMPILER_ID MATCHES Clang)
+-  add_dependencies(libStaticMirror clang)
++  add_dependencies(libStaticMirror clang-libraries)
+ endif()
+ 
+ add_dependencies(libStaticMirror
+diff --git a/tools/libSwiftScan/CMakeLists.txt b/tools/libSwiftScan/CMakeLists.txt
+index 2ba13e1e..def352c5 100644
+--- a/tools/libSwiftScan/CMakeLists.txt
++++ b/tools/libSwiftScan/CMakeLists.txt
+@@ -21,7 +21,7 @@ if(${SWIFT_HOST_VARIANT_SDK} IN_LIST SWIFT_DARWIN_PLATFORMS)
+ endif()
+ 
+ add_dependencies(libSwiftScan
+-  clang
++  clang-libraries
+   swiftDependencyScan)
+ 
+ target_link_libraries(libSwiftScan PRIVATE

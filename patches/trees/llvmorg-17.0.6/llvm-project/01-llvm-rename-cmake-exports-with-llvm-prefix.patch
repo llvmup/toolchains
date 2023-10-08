@@ -1,0 +1,106 @@
+Rename the LLVM CMake exports targets with a "llvm-" prefix
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ clang/cmake/caches/MultiDistributionExample.cmake |    6 +++---
+ llvm/cmake/modules/AddLLVM.cmake                  |    2 +-
+ llvm/cmake/modules/CMakeLists.txt                 |   10 +++++-----
+ llvm/cmake/modules/LLVMDistributionSupport.cmake  |    6 ++----
+ 4 files changed, 11 insertions(+), 13 deletions(-)
+
+diff --git a/clang/cmake/caches/MultiDistributionExample.cmake b/clang/cmake/caches/MultiDistributionExample.cmake
+index de10dcc11..7c1e62b2d 100644
+--- a/clang/cmake/caches/MultiDistributionExample.cmake
++++ b/clang/cmake/caches/MultiDistributionExample.cmake
+@@ -53,7 +53,7 @@ set(LLVM_Toolchain_DISTRIBUTION_COMPONENTS
+ 
+ # Note that we need to include the CMake exports targets for the distribution
+ # (development-cmake-exports and clang-development-cmake-exports), as well as
+-# the general CMake exports target for each project (cmake-exports and
++# the general CMake exports target for each project (llvm-cmake-exports and
+ # clang-cmake-exports), in our list of targets. The distribution CMake exports
+ # targets just install the CMake exports file for the distribution's targets,
+ # whereas the project CMake exports targets install the rest of the project's
+@@ -62,8 +62,8 @@ set(LLVM_Toolchain_DISTRIBUTION_COMPONENTS
+ # file to get the exported targets).
+ set(LLVM_Development_DISTRIBUTION_COMPONENTS
+       # LLVM
+-      cmake-exports
+-      development-cmake-exports
++      llvm-cmake-exports
++      llvm-development-cmake-exports
+       llvm-headers
+       llvm-libraries
+       # Clang
+diff --git a/llvm/cmake/modules/AddLLVM.cmake b/llvm/cmake/modules/AddLLVM.cmake
+index 230620c37..8c98a104e 100644
+--- a/llvm/cmake/modules/AddLLVM.cmake
++++ b/llvm/cmake/modules/AddLLVM.cmake
+@@ -1140,7 +1140,7 @@ function(process_llvm_pass_plugins)
+       install(FILES
+           ${llvm_cmake_builddir}/LLVMConfigExtensions.cmake
+           DESTINATION ${LLVM_INSTALL_PACKAGE_DIR}
+-          COMPONENT cmake-exports)
++          COMPONENT llvm-cmake-exports)
+ 
+       set(ExtensionDef "${LLVM_BINARY_DIR}/include/llvm/Support/Extension.def")
+       file(WRITE "${ExtensionDef}.tmp" "//extension handlers\n")
+diff --git a/llvm/cmake/modules/CMakeLists.txt b/llvm/cmake/modules/CMakeLists.txt
+index d99af79aa..887571c1e 100644
+--- a/llvm/cmake/modules/CMakeLists.txt
++++ b/llvm/cmake/modules/CMakeLists.txt
+@@ -168,11 +168,11 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+     ${llvm_cmake_builddir}/LLVMConfigVersion.cmake
+     LLVM-Config.cmake
+     DESTINATION ${LLVM_INSTALL_PACKAGE_DIR}
+-    COMPONENT cmake-exports)
++    COMPONENT llvm-cmake-exports)
+ 
+   install(DIRECTORY .
+     DESTINATION ${LLVM_INSTALL_PACKAGE_DIR}
+-    COMPONENT cmake-exports
++    COMPONENT llvm-cmake-exports
+     FILES_MATCHING PATTERN *.cmake
+     PATTERN LLVMConfig.cmake EXCLUDE
+     PATTERN LLVMConfigExtensions.cmake EXCLUDE
+@@ -183,8 +183,8 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+ 
+   if (NOT LLVM_ENABLE_IDE)
+     # Add a dummy target so this can be used with LLVM_DISTRIBUTION_COMPONENTS
+-    add_custom_target(cmake-exports)
+-    add_llvm_install_targets(install-cmake-exports
+-                             COMPONENT cmake-exports)
++    add_custom_target(llvm-cmake-exports)
++    add_llvm_install_targets(install-llvm-cmake-exports
++                             COMPONENT llvm-cmake-exports)
+   endif()
+ endif()
+diff --git a/llvm/cmake/modules/LLVMDistributionSupport.cmake b/llvm/cmake/modules/LLVMDistributionSupport.cmake
+index 0b78f8f91..4698a42b0 100644
+--- a/llvm/cmake/modules/LLVMDistributionSupport.cmake
++++ b/llvm/cmake/modules/LLVMDistributionSupport.cmake
+@@ -5,8 +5,7 @@
+ # subprojects:
+ # - The generated CMake exports file for ${project} is called ${project}Targets
+ #   (except for LLVM where it's called ${project}Exports for legacy reasons).
+-# - The build target for the CMake exports is called ${project}-cmake-exports
+-#   (except LLVM where it's just cmake-exports).
++# - The build target for the CMake exports is called ${project}-cmake-exports.
+ # - The ${PROJECT}${distribution}_HAS_EXPORTS global property holds whether a
+ #   project has any exports for a particular ${distribution} (where ${PROJECT}
+ #   is the project name in uppercase).
+@@ -184,11 +183,10 @@ endfunction()
+ function(install_distribution_exports project)
+   string(TOUPPER "${project}" project_upper)
+   string(TOLOWER "${project}" project_lower)
++  set(prefix "${project_lower}-")
+   if(project STREQUAL "LLVM")
+-    set(prefix "")
+     set(suffix "Exports") # legacy
+   else()
+-    set(prefix "${project_lower}-")
+     set(suffix "Targets")
+   endif()
+   set(destination "${${project_upper}_INSTALL_PACKAGE_DIR}")

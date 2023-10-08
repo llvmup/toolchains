@@ -1,0 +1,48 @@
+Install the Swift headers
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ CMakeLists.txt |   31 +++++++++++++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 097eb1b8..cae2e01d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1387,3 +1387,34 @@ if(XCODE)
+   add_custom_target(Miscellaneous
+       SOURCES ${SWIFT_TOPLEVEL_HEADERS})
+ endif()
++
++install(DIRECTORY include/swift
++  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
++  COMPONENT swift-headers
++  FILES_MATCHING
++  PATTERN "*.def"
++  PATTERN "*.h"
++  PATTERN "*.modulemap"
++)
++
++install(DIRECTORY stdlib/public/SwiftShims/swift
++  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
++  COMPONENT swift-headers
++  FILES_MATCHING
++  PATTERN "*.h"
++  PATTERN "*.modulemap"
++)
++
++install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/swift
++  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
++  COMPONENT swift-headers
++  FILES_MATCHING
++  PATTERN "CMakeFiles" EXCLUDE
++  PATTERN "*.gyb"
++  PATTERN "*.h"
++  PATTERN "*.inc"
++)
++
++add_llvm_install_targets(install-swift-headers
++  COMPONENT swift-headers
++)

@@ -1,0 +1,38 @@
+Install the LLVM license file
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ llvm/CMakeLists.txt |   11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/llvm/CMakeLists.txt b/llvm/CMakeLists.txt
+index 8d3519e61..6eca41303 100644
+--- a/llvm/CMakeLists.txt
++++ b/llvm/CMakeLists.txt
+@@ -1298,7 +1298,6 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+     PATTERN "*.h"
+     PATTERN "*.td"
+     PATTERN "*.inc"
+-    PATTERN "LICENSE.TXT"
+     )
+ 
+   install(DIRECTORY ${LLVM_INCLUDE_DIR}/llvm ${LLVM_INCLUDE_DIR}/llvm-c
+@@ -1362,6 +1361,16 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+   endif()
+ endif()
+ 
++add_custom_target(llvm-license)
++add_llvm_install_targets(install-llvm-license
++  DEPENDS llvm-license
++  COMPONENT llvm-license
++)
++install(FILES "LICENSE.TXT"
++  DESTINATION "share/llvm"
++  COMPONENT llvm-license
++)
++
+ # This must be at the end of the LLVM root CMakeLists file because it must run
+ # after all targets are created.
+ llvm_distribution_add_targets()

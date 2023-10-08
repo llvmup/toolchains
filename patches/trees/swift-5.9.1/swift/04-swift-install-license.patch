@@ -1,0 +1,36 @@
+Rename the Swift license target from `license` into `install-swift-license`
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ CMakeLists.txt                      |    2 +-
+ cmake/modules/SwiftComponents.cmake |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index cae2e01d..56bcd013 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1370,7 +1370,7 @@ add_subdirectory(cmake/modules)
+ 
+ swift_install_in_component(FILES "LICENSE.txt"
+                            DESTINATION "share/swift"
+-                           COMPONENT license)
++                           COMPONENT swift-license)
+ 
+ # Add a documentation target so that documentation shows up in the
+ # Xcode project.
+diff --git a/cmake/modules/SwiftComponents.cmake b/cmake/modules/SwiftComponents.cmake
+index d334ac29..0329f4fc 100644
+--- a/cmake/modules/SwiftComponents.cmake
++++ b/cmake/modules/SwiftComponents.cmake
+@@ -69,7 +69,7 @@
+ # * llvm-toolchain-dev-tools -- install LLVM development tools useful in a shared toolchain
+ # * dev -- headers and libraries required to use Swift compiler as a library.
+ set(_SWIFT_DEFINED_COMPONENTS
+-  "autolink-driver;back-deployment;compiler;clang-builtin-headers;clang-resource-dir-symlink;clang-builtin-headers-in-clang-resource-dir;libexec;stdlib;stdlib-experimental;sdk-overlay;static-mirror-lib;editor-integration;tools;testsuite-tools;toolchain-tools;toolchain-dev-tools;llvm-toolchain-dev-tools;dev;license;sourcekit-xpc-service;sourcekit-inproc;swift-remote-mirror;swift-remote-mirror-headers")
++  "autolink-driver;back-deployment;compiler;clang-builtin-headers;clang-resource-dir-symlink;clang-builtin-headers-in-clang-resource-dir;libexec;stdlib;stdlib-experimental;sdk-overlay;static-mirror-lib;editor-integration;tools;testsuite-tools;toolchain-tools;toolchain-dev-tools;llvm-toolchain-dev-tools;dev;swift-license;sourcekit-xpc-service;sourcekit-inproc;swift-remote-mirror;swift-remote-mirror-headers")
+ 
+ # The default install components include all of the defined components, except
+ # for the following exceptions.

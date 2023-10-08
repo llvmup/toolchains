@@ -1,0 +1,22 @@
+Fix some dllimport declarations
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ tools/libSwiftScan/libSwiftScan.cpp |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tools/libSwiftScan/libSwiftScan.cpp b/tools/libSwiftScan/libSwiftScan.cpp
+index 978054b2..4d10a748 100644
+--- a/tools/libSwiftScan/libSwiftScan.cpp
++++ b/tools/libSwiftScan/libSwiftScan.cpp
+@@ -433,7 +433,7 @@ void swiftscan_scan_invocation_set_working_directory(
+   invocation->working_directory = swift::c_string_utils::create_clone(working_directory);
+ }
+ 
+-SWIFTSCAN_PUBLIC void
++SWIFTSCAN_PUBLIC inline void
+ swiftscan_scan_invocation_set_argv(swiftscan_scan_invocation_t invocation,
+                                    int argc, const char **argv) {
+   invocation->argv = swift::c_string_utils::create_set(argc, argv);

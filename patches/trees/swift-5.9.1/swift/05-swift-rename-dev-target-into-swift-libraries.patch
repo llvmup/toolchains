@@ -1,0 +1,126 @@
+Rename the Swift libraries target from `dev` into `swift-libraries`
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ cmake/modules/AddSwift.cmake                       |   10 +++++-----
+ cmake/modules/SwiftComponents.cmake                |    8 ++++----
+ docs/CMakeLists.txt                                |    2 +-
+ stdlib/private/BlocksRuntimeStubs/CMakeLists.txt   |    2 +-
+ stdlib/public/RemoteInspection/CMakeLists.txt      |    2 +-
+ .../cmake/modules/AddSwiftSourceKit.cmake          |    2 +-
+ utils/build-presets.ini                            |    2 +-
+ 7 files changed, 14 insertions(+), 14 deletions(-)
+
+diff --git a/cmake/modules/AddSwift.cmake b/cmake/modules/AddSwift.cmake
+index 42d75ef6..e9ccecde 100644
+--- a/cmake/modules/AddSwift.cmake
++++ b/cmake/modules/AddSwift.cmake
+@@ -806,15 +806,15 @@ function(add_swift_host_library name)
+   target_compile_options(${name} PRIVATE
+     $<$<AND:$<COMPILE_LANGUAGE:Swift>,$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>>:-cross-module-optimization>)
+ 
+-  add_dependencies(dev ${name})
++  add_dependencies(swift-libraries ${name})
+   if(NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+     swift_install_in_component(TARGETS ${name}
+-      ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX} COMPONENT dev
+-      LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX} COMPONENT dev
+-      RUNTIME DESTINATION bin COMPONENT dev)
++      ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX} COMPONENT swift-libraries
++      LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX} COMPONENT swift-libraries
++      RUNTIME DESTINATION bin COMPONENT swift-libraries)
+   endif()
+ 
+-  swift_is_installing_component(dev is_installing)
++  swift_is_installing_component(swift-libraries is_installing)
+   if(NOT is_installing)
+     set_property(GLOBAL APPEND PROPERTY SWIFT_BUILDTREE_EXPORTS ${name})
+   else()
+diff --git a/cmake/modules/SwiftComponents.cmake b/cmake/modules/SwiftComponents.cmake
+index 0329f4fc..36ad1579 100644
+--- a/cmake/modules/SwiftComponents.cmake
++++ b/cmake/modules/SwiftComponents.cmake
+@@ -67,15 +67,15 @@
+ # * static-mirror-lib -- Build the static mirror library used by SwiftStaticMirror.
+ # * toolchain-dev-tools -- install development tools useful in a shared toolchain
+ # * llvm-toolchain-dev-tools -- install LLVM development tools useful in a shared toolchain
+-# * dev -- headers and libraries required to use Swift compiler as a library.
++# * swift-libraries -- headers and libraries required to use Swift compiler as a library.
+ set(_SWIFT_DEFINED_COMPONENTS
+-  "autolink-driver;back-deployment;compiler;clang-builtin-headers;clang-resource-dir-symlink;clang-builtin-headers-in-clang-resource-dir;libexec;stdlib;stdlib-experimental;sdk-overlay;static-mirror-lib;editor-integration;tools;testsuite-tools;toolchain-tools;toolchain-dev-tools;llvm-toolchain-dev-tools;dev;swift-license;sourcekit-xpc-service;sourcekit-inproc;swift-remote-mirror;swift-remote-mirror-headers")
++  "autolink-driver;back-deployment;compiler;clang-builtin-headers;clang-resource-dir-symlink;clang-builtin-headers-in-clang-resource-dir;libexec;stdlib;stdlib-experimental;sdk-overlay;static-mirror-lib;editor-integration;tools;testsuite-tools;toolchain-tools;toolchain-dev-tools;llvm-toolchain-dev-tools;swift-libraries;swift-license;sourcekit-xpc-service;sourcekit-inproc;swift-remote-mirror;swift-remote-mirror-headers")
+ 
+ # The default install components include all of the defined components, except
+ # for the following exceptions.
+ set(_SWIFT_DEFAULT_COMPONENTS "${_SWIFT_DEFINED_COMPONENTS}")
+-# 'dev' takes up a lot of disk space and isn't part of a normal toolchain.
+-list(REMOVE_ITEM _SWIFT_DEFAULT_COMPONENTS "dev")
++# 'swift-libraries' takes up a lot of disk space and isn't part of a normal toolchain.
++list(REMOVE_ITEM _SWIFT_DEFAULT_COMPONENTS "swift-libraries")
+ # These clang header options conflict with 'clang-builtin-headers'.
+ list(REMOVE_ITEM _SWIFT_DEFAULT_COMPONENTS "clang-resource-dir-symlink")
+ list(REMOVE_ITEM _SWIFT_DEFAULT_COMPONENTS "clang-builtin-headers-in-clang-resource-dir")
+diff --git a/docs/CMakeLists.txt b/docs/CMakeLists.txt
+index 74624ead..ccf838d7 100644
+--- a/docs/CMakeLists.txt
++++ b/docs/CMakeLists.txt
+@@ -67,7 +67,7 @@ if (DOXYGEN_FOUND)
+     add_dependencies(doxygen swift-doxygen)
+   endif()
+ 
+-  add_dependencies(dev swift-doxygen)
++  add_dependencies(swift-libraries swift-doxygen)
+   swift_install_in_component(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/doxygen/html"
+                              DESTINATION "docs/html"
+                              COMPONENT swift-doxygen)
+diff --git a/stdlib/private/BlocksRuntimeStubs/CMakeLists.txt b/stdlib/private/BlocksRuntimeStubs/CMakeLists.txt
+index cc8dd197..75f6e2f2 100644
+--- a/stdlib/private/BlocksRuntimeStubs/CMakeLists.txt
++++ b/stdlib/private/BlocksRuntimeStubs/CMakeLists.txt
+@@ -17,7 +17,7 @@ foreach(SDK ${SWIFT_SDKS})
+         SHARED NOSWIFTRT
+         ARCHITECTURE ${ARCH}
+         SDK ${SDK}
+-        INSTALL_IN_COMPONENT dev
++        INSTALL_IN_COMPONENT swift-libraries
+         BlocksRuntime.c
+       )
+       set_target_properties(BlocksRuntimeStub${VARIANT_SUFFIX} PROPERTIES
+diff --git a/stdlib/public/RemoteInspection/CMakeLists.txt b/stdlib/public/RemoteInspection/CMakeLists.txt
+index 577b8c1d..11655fa7 100644
+--- a/stdlib/public/RemoteInspection/CMakeLists.txt
++++ b/stdlib/public/RemoteInspection/CMakeLists.txt
+@@ -16,4 +16,4 @@ add_swift_target_library(swiftRemoteInspection STATIC
+   INCORPORATE_OBJECT_LIBRARIES
+     swiftLLVMSupport swiftDemangling swiftDemanglingCR
+   SWIFT_COMPILE_FLAGS ${SWIFT_STANDARD_LIBRARY_SWIFT_FLAGS}
+-  INSTALL_IN_COMPONENT dev)
++  INSTALL_IN_COMPONENT swift-libraries)
+diff --git a/tools/SourceKit/cmake/modules/AddSwiftSourceKit.cmake b/tools/SourceKit/cmake/modules/AddSwiftSourceKit.cmake
+index 76b98e74..1d02cbff 100644
+--- a/tools/SourceKit/cmake/modules/AddSwiftSourceKit.cmake
++++ b/tools/SourceKit/cmake/modules/AddSwiftSourceKit.cmake
+@@ -282,7 +282,7 @@ macro(add_sourcekit_library name)
+     if(SOURCEKITLIB_SHARED)
+       set(SOURCEKITLIB_INSTALL_IN_COMPONENT tools)
+     else()
+-      set(SOURCEKITLIB_INSTALL_IN_COMPONENT dev)
++      set(SOURCEKITLIB_INSTALL_IN_COMPONENT swift-libraries)
+     endif()
+   endif()
+   add_dependencies(${SOURCEKITLIB_INSTALL_IN_COMPONENT} ${name})
+diff --git a/utils/build-presets.ini b/utils/build-presets.ini
+index cd2fc6c4..6158f6fd 100644
+--- a/utils/build-presets.ini
++++ b/utils/build-presets.ini
+@@ -1090,7 +1090,7 @@ install-swift-driver
+ install-swiftsyntax
+ install-xctest
+ install-prefix=/usr
+-swift-install-components=autolink-driver;compiler;clang-builtin-headers;libexec;stdlib;swift-remote-mirror;sdk-overlay;dev
++swift-install-components=autolink-driver;compiler;clang-builtin-headers;libexec;stdlib;swift-remote-mirror;sdk-overlay;swift-libraries
+ build-swift-static-stdlib
+ build-swift-static-sdk-overlay
+ 

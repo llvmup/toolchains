@@ -1,0 +1,23 @@
+Export the MLIR library properties with the CMake install targets
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ mlir/cmake/modules/AddMLIR.cmake |    3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/mlir/cmake/modules/AddMLIR.cmake b/mlir/cmake/modules/AddMLIR.cmake
+index 15079eea3..6fafaa7b7 100644
+--- a/mlir/cmake/modules/AddMLIR.cmake
++++ b/mlir/cmake/modules/AddMLIR.cmake
+@@ -303,6 +303,9 @@ function(add_mlir_library name)
+   llvm_add_library(${name} ${LIBTYPE} ${ARG_UNPARSED_ARGUMENTS} ${srcs} DEPENDS ${ARG_DEPENDS} LINK_COMPONENTS ${ARG_LINK_COMPONENTS} LINK_LIBS ${ARG_LINK_LIBS})
+ 
+   if(TARGET ${name})
++    target_include_directories(${name} PUBLIC
++      $<INSTALL_INTERFACE:include>
++    )
+     target_link_libraries(${name} INTERFACE ${LLVM_COMMON_LIBS})
+     if(NOT ARG_DISABLE_INSTALL)
+       add_mlir_library_install(${name})
