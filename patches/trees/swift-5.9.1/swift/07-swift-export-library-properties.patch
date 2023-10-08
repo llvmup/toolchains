@@ -1,0 +1,30 @@
+Export the Swift library properties with the CMake install targets
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ cmake/modules/AddSwift.cmake |   10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/cmake/modules/AddSwift.cmake b/cmake/modules/AddSwift.cmake
+index 9950d721..22cb38a5 100644
+--- a/cmake/modules/AddSwift.cmake
++++ b/cmake/modules/AddSwift.cmake
+@@ -700,7 +700,15 @@ function(add_swift_host_library name)
+ 
+   add_library(${name} ${libkind} ${ASHL_SOURCES})
+ 
+-  target_link_directories(${name} PUBLIC ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
++  target_include_directories(${name} PUBLIC
++    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
++    $<INSTALL_INTERFACE:include>
++  )
++
++  target_link_directories(${name} PUBLIC
++    $<BUILD_INTERFACE:${CMAKE_LIBRARY_OUTPUT_DIRECTORY}>
++    $<INSTALL_INTERFACE:lib>
++  )
+ 
+   # Respect LLVM_COMMON_DEPENDS if it is set.
+   #

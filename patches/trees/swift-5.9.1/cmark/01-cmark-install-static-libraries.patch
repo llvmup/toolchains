@@ -1,0 +1,32 @@
+Install the cmark static libraries
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ src/CMakeLists.txt |    9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 65e23cc..ee27ed8 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -135,11 +135,16 @@ endif()
+ 
+ set(libdir lib${LIB_SUFFIX})
+ 
+-install(TARGETS ${PROGRAM} ${CMARK_INSTALL}
++list(APPEND CMARK_INSTALL_TARGETS "${CMARK_INSTALL}")
++if(NOT CMARK_EXPORT_LIBRARY_TARGETS_ONLY)
++  list(APPEND CMARK_INSTALL_TARGETS ${PROGRAM})
++endif()
++
++install(TARGETS ${CMARK_INSTALL_TARGETS}
+   EXPORT cmark-gfm
+   RUNTIME DESTINATION bin
+   LIBRARY DESTINATION ${libdir}
+-  ARCHIVE DESTINATION ${libdir}
++  ARCHIVE DESTINATION ${libdir} COMPONENT cmark-static-libraries
+   )
+ 
+ if(CMARK_SHARED OR CMARK_STATIC)

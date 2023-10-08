@@ -1,0 +1,151 @@
+Modify the Swift CMake config files to support relocatable installs
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ cmake/modules/CMakeLists.txt       |   82 ++++++++++++++++++++++++++++++++----
+ cmake/modules/SwiftConfig.cmake.in |   27 ++++--------
+ 2 files changed, 84 insertions(+), 25 deletions(-)
+
+diff --git a/cmake/modules/CMakeLists.txt b/cmake/modules/CMakeLists.txt
+index b52c4e11..16f1b4c6 100644
+--- a/cmake/modules/CMakeLists.txt
++++ b/cmake/modules/CMakeLists.txt
+@@ -1,19 +1,85 @@
++include(GNUInstallPackageDir)
++include(ExtendPath)
++include(LLVMDistributionSupport)
++include(FindPrefixFromConfig)
++
++set(CMARK_INSTALL_PACKAGE_DIR "${CMAKE_INSTALL_PACKAGEDIR}/cmark")
+ set(SWIFT_INSTALL_PACKAGE_DIR lib${LLVM_LIBDIR_SUFFIX}/cmake/swift)
+ set(swift_cmake_builddir "${SWIFT_BINARY_DIR}/${SWIFT_INSTALL_PACKAGE_DIR}")
++set(clang_cmake_builddir "${CMAKE_BINARY_DIR}/lib${LLVM_LIBDIR_SUFFIX}/cmake/clang")
++set(cmark_cmake_builddir "${CMAKE_BINARY_DIR}/lib${LLVM_LIBDIR_SUFFIX}/cmake/cmark")
+ 
+ # Generate build-tree exports list only
+-set(SWIFT_EXPORTS_FILE ${swift_cmake_builddir}/SwiftExports.cmake)
+ get_property(SWIFT_EXPORTS GLOBAL PROPERTY SWIFT_EXPORTS)
+ get_property(SWIFT_BUILDTREE_EXPORTS GLOBAL PROPERTY SWIFT_BUILDTREE_EXPORTS)
+ 
+-set(SWIFT_CONFIG_EXPORTS ${SWIFT_EXPORTS} ${SWIFT_BUILDTREE_EXPORTS})
+-export(TARGETS ${SWIFT_CONFIG_EXPORTS} FILE ${SWIFT_EXPORTS_FILE})
+-
+-
+-set(SWIFT_INCLUDE_DIRS ${SWIFT_INCLUDE_DIR} ${SWIFT_MAIN_INCLUDE_DIR} ${SWIFT_SHIMS_INCLUDE_DIR})
+-set(SWIFT_LIBRARY_DIRS ${SWIFT_LIBRARY_OUTPUT_INTDIR})
++set(SWIFT_CONFIG_EXPORTS ${SWIFT_EXPORTS} ${SWIFT_BUILDTREE_EXPORTS} libcmark-gfm_static)
++export(TARGETS ${SWIFT_CONFIG_EXPORTS} FILE "${swift_cmake_builddir}/SwiftTargets.cmake")
+ 
++# Generate SwiftConfig.cmake for the build tree.
++set(SWIFT_CONFIG_CMAKE_DIR "${swift_cmake_builddir}")
++set(SWIFT_CONFIG_CLANG_CMAKE_DIR "${clang_cmake_builddir}")
++set(SWIFT_CONFIG_CMARK_CMAKE_DIR "${cmark_cmake_builddir}")
++set(SWIFT_CONFIG_INCLUDE_EXPORTS "include(\"${swift_cmake_builddir}/SwiftTargets.cmake\")")
++set(SWIFT_CONFIG_INCLUDE_DIRS ${SWIFT_INCLUDE_DIR} ${SWIFT_MAIN_INCLUDE_DIR} ${SWIFT_SHIMS_INCLUDE_DIR})
++set(SWIFT_CONFIG_LIBRARY_DIRS ${SWIFT_LIBRARY_OUTPUT_INTDIR})
+ configure_file(
+-  SwiftConfig.cmake.in
++  ${CMAKE_CURRENT_SOURCE_DIR}/SwiftConfig.cmake.in
+   ${swift_cmake_builddir}/SwiftConfig.cmake
+   @ONLY)
++set(SWIFT_CONFIG_CODE)
++set(SWIFT_CONFIG_CMAKE_DIR)
++
++# For compatibility with projects that include(SwiftConfig)
++# via CMAKE_MODULE_PATH, place API modules next to it.
++# Copy without source permissions because the source could be read-only,
++# but we need to write into the copied folder.
++file(COPY .
++  DESTINATION ${swift_cmake_builddir}
++  NO_SOURCE_PERMISSIONS
++  FILES_MATCHING PATTERN *.cmake
++  PATTERN CMakeFiles EXCLUDE
++)
++
++# Generate SwiftConfig.cmake for the install tree.
++find_prefix_from_config(SWIFT_CONFIG_CODE SWIFT_INSTALL_PREFIX "${SWIFT_INSTALL_PACKAGE_DIR}")
++extend_path(SWIFT_CONFIG_CMAKE_DIR "\${SWIFT_INSTALL_PREFIX}" "${SWIFT_INSTALL_PACKAGE_DIR}")
++extend_path(SWIFT_CONFIG_CLANG_CMAKE_DIR "\${SWIFT_INSTALL_PREFIX}" "${CLANG_INSTALL_PACKAGE_DIR}")
++extend_path(SWIFT_CONFIG_CMARK_CMAKE_DIR "\${SWIFT_INSTALL_PREFIX}" "${CMARK_INSTALL_PACKAGE_DIR}")
++get_config_exports_includes(Swift SWIFT_CONFIG_INCLUDE_EXPORTS)
++extend_path(SWIFT_CONFIG_INCLUDE_DIRS "\${SWIFT_INSTALL_PREFIX}" "${CMAKE_INSTALL_INCLUDEDIR}")
++extend_path(SWIFT_CONFIG_LIBRARY_DIRS "\${SWIFT_INSTALL_PREFIX}" "${CMAKE_INSTALL_LIBDIR}")
++configure_file(
++  ${CMAKE_CURRENT_SOURCE_DIR}/SwiftConfig.cmake.in
++  ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/SwiftConfig.cmake
++  @ONLY
++)
++set(SWIFT_CONFIG_CODE)
++set(SWIFT_CONFIG_CMAKE_DIR)
++
++if(NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
++  install_distribution_exports(Swift)
++
++  install(FILES
++    ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/SwiftConfig.cmake
++    ${CMAKE_CURRENT_SOURCE_DIR}/AddSwift.cmake
++    DESTINATION ${SWIFT_INSTALL_PACKAGE_DIR}
++    COMPONENT swift-cmake-exports
++  )
++
++  install(DIRECTORY .
++    DESTINATION ${SWIFT_INSTALL_PACKAGE_DIR}
++    COMPONENT swift-cmake-exports
++    FILES_MATCHING PATTERN *.cmake
++    PATTERN SwiftConfig.cmake EXCLUDE
++    PATTERN AddSwift.cmake EXCLUDE
++  )
++
++  if(NOT LLVM_ENABLE_IDE)
++    # Add a dummy target so this can be used with LLVM_DISTRIBUTION_COMPONENTS
++    add_custom_target(swift-cmake-exports)
++    add_llvm_install_targets(install-swift-cmake-exports
++      COMPONENT swift-cmake-exports
++    )
++  endif()
++endif()
+diff --git a/cmake/modules/SwiftConfig.cmake.in b/cmake/modules/SwiftConfig.cmake.in
+index 262ed49d..ff23032d 100644
+--- a/cmake/modules/SwiftConfig.cmake.in
++++ b/cmake/modules/SwiftConfig.cmake.in
+@@ -3,28 +3,21 @@
+ @SWIFT_CONFIG_CODE@
+ 
+ set(SWIFT_VERSION @SWIFT_VERSION@)
+-set(SWIFT_MAIN_SRC_DIR @SWIFT_SOURCE_DIR@)
+ 
+-set(SWIFT_INCLUDE_DIRS "@SWIFT_INCLUDE_DIRS@")
+-set(SWIFT_LIBRARY_DIRS "@SWIFT_LIBRARY_DIRS@")
++find_package(Clang REQUIRED CONFIG
++  HINTS "@SWIFT_CONFIG_CLANG_CMAKE_DIR@"
++)
+ 
+-# These variables are duplicated, but they must match the LLVM variables of the
+-# same name. The variables ending in "S" could some day become lists, and are
+-# preserved for convention and compatibility.
+-set(SWIFT_INCLUDE_DIR "@SWIFT_INCLUDE_DIRS@")
+-set(SWIFT_LIBRARY_DIR "@SWIFT_LIBRARY_DIRS@")
++set(SWIFT_EXPORTED_TARGETS "@SWIFT_EXPORTS@")
++set(SWIFT_CMAKE_DIR "@SWIFT_CONFIG_CMAKE_DIR@")
++set(SWIFT_INCLUDE_DIRS "@SWIFT_CONFIG_INCLUDE_DIRS@")
++set(SWIFT_LIBRARY_DIRS "@SWIFT_CONFIG_LIBRARY_DIRS@")
+ 
+-set(SWIFT_CMAKE_DIR "@SWIFT_CMAKE_DIR@")
+-set(SWIFT_BINARY_DIR "@SWIFT_BINARY_DIR@")
+-
+-set(BOOTSTRAPPING_MODE "@BOOTSTRAPPING_MODE@")
+-
+-set(CMARK_TARGETS_FILE @SWIFT_PATH_TO_CMARK_BUILD@/src/cmarkTargets.cmake)
+-if(NOT TARGET libcmark_static AND EXISTS ${CMARK_TARGETS_FILE})
++set(CMARK_TARGETS_FILE "@SWIFT_CONFIG_CMARK_CMAKE_DIR@/cmark-gfm.cmake")
++if(NOT TARGET libcmark-gfm_static AND EXISTS ${CMARK_TARGETS_FILE})
+   include(${CMARK_TARGETS_FILE})
+ endif()
+ 
+ if(NOT TARGET swift)
+-  set(SWIFT_EXPORTED_TARGETS "@SWIFT_CONFIG_EXPORTS@")
+-  include("@SWIFT_EXPORTS_FILE@")
++  @SWIFT_CONFIG_INCLUDE_EXPORTS@
+ endif()

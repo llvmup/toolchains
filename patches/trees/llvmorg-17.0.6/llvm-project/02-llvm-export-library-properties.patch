@@ -1,0 +1,39 @@
+Export the LLVM library properties with the CMake install targets
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ llvm/cmake/modules/AddLLVM.cmake |   12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/llvm/cmake/modules/AddLLVM.cmake b/llvm/cmake/modules/AddLLVM.cmake
+index 8c98a104e..03803f550 100644
+--- a/llvm/cmake/modules/AddLLVM.cmake
++++ b/llvm/cmake/modules/AddLLVM.cmake
+@@ -531,7 +531,11 @@ function(llvm_add_library name)
+     list(APPEND objlibs ${obj_name})
+ 
+     # Bring in the target include directories from our original target.
+-    target_include_directories(${obj_name} PRIVATE $<TARGET_PROPERTY:${name},INCLUDE_DIRECTORIES>)
++    set_target_properties(${obj_name} PROPERTIES
++      INCLUDE_DIRECTORIES "$<TARGET_PROPERTY:${name},INCLUDE_DIRECTORIES>"
++      INTERFACE_INCLUDE_DIRECTORIES "$<TARGET_PROPERTY:${name},INTERFACE_INCLUDE_DIRECTORIES>"
++      FOLDER "Object Libraries"
++    )
+ 
+     set_target_properties(${obj_name} PROPERTIES FOLDER "Object Libraries")
+     if(ARG_DEPENDS)
+@@ -850,6 +854,12 @@ macro(add_llvm_library name)
+     llvm_add_library(${name} ${ARG_UNPARSED_ARGUMENTS})
+   endif()
+ 
++  if(TARGET ${name})
++    target_include_directories(${name} PUBLIC
++      $<INSTALL_INTERFACE:include>
++    )
++  endif()
++
+   # Libraries that are meant to only be exposed via the build tree only are
+   # never installed and are only exported as a target in the special build tree
+   # config file.

@@ -1,0 +1,30 @@
+Install the Swift CMake exports
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ cmake/modules/AddSwift.cmake |    9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/cmake/modules/AddSwift.cmake b/cmake/modules/AddSwift.cmake
+index e9ccecde..9950d721 100644
+--- a/cmake/modules/AddSwift.cmake
++++ b/cmake/modules/AddSwift.cmake
+@@ -808,10 +808,13 @@ function(add_swift_host_library name)
+ 
+   add_dependencies(swift-libraries ${name})
+   if(NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
++    get_target_export_arg(${name} Swift export_to_swifttargets UMBRELLA swift-libraries)
+     swift_install_in_component(TARGETS ${name}
+-      ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX} COMPONENT swift-libraries
+-      LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX} COMPONENT swift-libraries
+-      RUNTIME DESTINATION bin COMPONENT swift-libraries)
++      COMPONENT swift-libraries
++      ${export_to_swifttargets}
++      ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX}
++      LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
++      RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+   endif()
+ 
+   swift_is_installing_component(swift-libraries is_installing)

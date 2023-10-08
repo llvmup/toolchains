@@ -1,0 +1,21 @@
+Install the cmark headers
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ src/CMakeLists.txt |    1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index ee27ed8..255d244 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -160,6 +160,7 @@ if(CMARK_SHARED OR CMARK_STATIC)
+     ${CMAKE_CURRENT_SOURCE_DIR}/include/export.h
+     ${CMAKE_CURRENT_SOURCE_DIR}/include/cmark-gfm_version.h
+     DESTINATION include
++    COMPONENT cmark-headers
+     )
+ 
+   install(EXPORT cmark-gfm DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)

@@ -1,0 +1,23 @@
+Export the Clang library properties with the CMake install targets
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ clang/cmake/modules/AddClang.cmake |    3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/clang/cmake/modules/AddClang.cmake b/clang/cmake/modules/AddClang.cmake
+index 75b0080f6..6e48c3138 100644
+--- a/clang/cmake/modules/AddClang.cmake
++++ b/clang/cmake/modules/AddClang.cmake
+@@ -112,6 +112,9 @@ macro(add_clang_library name)
+ 
+   foreach(lib ${libs})
+     if(TARGET ${lib})
++      target_include_directories(${name} PUBLIC
++        $<INSTALL_INTERFACE:include>
++      )
+       target_link_libraries(${lib} INTERFACE ${LLVM_COMMON_LIBS})
+ 
+       if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR ARG_INSTALL_WITH_TOOLCHAIN)

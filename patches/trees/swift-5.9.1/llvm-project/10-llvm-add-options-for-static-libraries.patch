@@ -1,0 +1,40 @@
+Add options for statically linking specific libraries
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ llvm/CMakeLists.txt                        |    4 ++++
+ llvm/tools/libCASPluginTest/CMakeLists.txt |    7 ++++++-
+ 2 files changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/llvm/CMakeLists.txt b/llvm/CMakeLists.txt
+index 6eca41303..37331e5c7 100644
+--- a/llvm/CMakeLists.txt
++++ b/llvm/CMakeLists.txt
+@@ -949,6 +949,10 @@ endforeach(t)
+ # Provide an LLVM_ namespaced alias for use in #cmakedefine.
+ set(LLVM_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+ 
++option(LLVM_BUILD_STATIC_CAS_PLUGIN_TEST
++  "Build the LLVM CAS Plugin Test Library as a static library"
++  OFF)
++
+ # Produce the target definition files, which provide a way for clients to easily
+ # include various classes of targets.
+ configure_file(
+diff --git a/llvm/tools/libCASPluginTest/CMakeLists.txt b/llvm/tools/libCASPluginTest/CMakeLists.txt
+index aaeba14fb..e6c01a8f1 100644
+--- a/llvm/tools/libCASPluginTest/CMakeLists.txt
++++ b/llvm/tools/libCASPluginTest/CMakeLists.txt
+@@ -9,4 +9,9 @@ set(SOURCES
+ 
+ set(LLVM_EXPORTED_SYMBOL_FILE ${CMAKE_CURRENT_SOURCE_DIR}/libCASPluginTest.exports)
+ 
+-add_llvm_library(CASPluginTest SHARED ${SOURCES})
++if(LLVM_BUILD_STATIC_CAS_PLUGIN_TEST)
++  set(llvm_static_cas_plugin_library_kind STATIC)
++else()
++  set(llvm_static_cas_plugin_library_kind SHARED)
++endif()
++add_llvm_library(CASPluginTest ${llvm_static_cas_plugin_library_kind} ${SOURCES})

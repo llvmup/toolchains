@@ -1,0 +1,13 @@
+# This series applies on Git commit e4aa79d796308594a4199a127c6c07e85985184d
+01-swift-rename-doxygen-target.patch
+02-swift-install-headers.patch
+03-swift-install-features-file.patch
+04-swift-install-license.patch
+05-swift-rename-dev-target-into-swift-libraries.patch
+06-swift-install-cmake-exports.patch
+07-swift-export-library-properties.patch
+08-swift-modify-config-modules-for-relocatability.patch
+09-swift-expose-version-numbers-as-cache-variables.patch
+10-swift-add-options-for-static-libraries.patch
+11-swift-modify-deps-to-avoid-building-clang-tools.patch
+12-swift-fix-dllimport.patch
