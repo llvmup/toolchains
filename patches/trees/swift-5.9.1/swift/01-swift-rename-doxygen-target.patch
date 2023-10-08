@@ -1,0 +1,36 @@
+Rename the Swift Doxygen target from `doxygen-swift` into `swift-doxygen`
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ docs/CMakeLists.txt |    8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/docs/CMakeLists.txt b/docs/CMakeLists.txt
+index eef2c349..74624ead 100644
+--- a/docs/CMakeLists.txt
++++ b/docs/CMakeLists.txt
+@@ -58,18 +58,18 @@ if (DOXYGEN_FOUND)
+   set(enable_external_search)
+   set(extra_search_mappings)
+ 
+-  add_custom_target(doxygen-swift
++  add_custom_target(swift-doxygen
+     ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxygen.cfg
+     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+     COMMENT "Generating swift doxygen documentation." VERBATIM)
+ 
+   if(LLVM_BUILD_DOCS)
+-    add_dependencies(doxygen doxygen-swift)
++    add_dependencies(doxygen swift-doxygen)
+   endif()
+ 
+-  add_dependencies(dev doxygen-swift)
++  add_dependencies(dev swift-doxygen)
+   swift_install_in_component(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/doxygen/html"
+                              DESTINATION "docs/html"
+-                             COMPONENT dev)
++                             COMPONENT swift-doxygen)
+ endif()
+ endif()

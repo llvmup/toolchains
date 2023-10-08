@@ -1,0 +1,27 @@
+Install the MLIR license file
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ mlir/CMakeLists.txt |   10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/mlir/CMakeLists.txt b/mlir/CMakeLists.txt
+index ac98cc290..a897ff455 100644
+--- a/mlir/CMakeLists.txt
++++ b/mlir/CMakeLists.txt
+@@ -260,3 +260,13 @@ add_subdirectory(cmake/modules)
+ if (MLIR_ENABLE_PYTHON_BENCHMARKS)
+   add_subdirectory(utils/mbr)
+ endif()
++
++add_custom_target(mlir-license)
++add_llvm_install_targets(install-mlir-license
++  DEPENDS mlir-license
++  COMPONENT mlir-license
++)
++install(FILES "LICENSE.TXT"
++  DESTINATION "share/mlir"
++  COMPONENT mlir-license
++)

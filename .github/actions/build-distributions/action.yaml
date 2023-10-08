@@ -1,0 +1,192 @@
+name: "build-distributions"
+description: "Build LLVM component distributions"
+inputs:
+  github-token:
+    description: "GitHub token"
+    required: true
+  llvm-version-major:
+    description: "Major version of LLVM"
+    required: true
+  toolchain-variant:
+    description: "Toolchain variant"
+    default: "llvmorg"
+  target-triple-arch:
+    description: "Architecture component of target triple"
+    required: true
+  target-triple-arch-debian:
+    description: "Debian short name for architecture component of target triple"
+    required: true
+  target-triple-sys:
+    description: "System component of target triple"
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: date +%s > ./.github/start_time
+
+    - shell: bash
+      run: bash ./scripts/detect-release-metadata.sh
+      env:
+        GITHUB_EVENT_NAME: ${{ github.event_name }}
+        GITHUB_BASE_REF: ${{ github.base_ref }}
+        GITHUB_REF: ${{ github.ref }}
+        GITHUB_RUN_ID: ${{ github.run_id }}
+
+    - if: inputs.target-triple-sys == 'linux' || inputs.target-triple-sys == 'macos'
+      uses: Homebrew/actions/setup-homebrew@master
+
+    # NOTE: The `|| true` is needed because homebrew may fail to link some (unneeded) binaries
+    - if: inputs.target-triple-sys == 'linux' || inputs.target-triple-sys == 'macos'
+      shell: bash
+      run: brew install ccache cmake ninja || true
+
+    # NOTE: The `|| true` is needed because homebrew may fail to link some (unneeded) binaries
+    - if: inputs.target-triple-sys == 'macos'
+      shell: bash
+      run: brew install llvm@17 || true
+
+    - if: inputs.target-triple-sys == 'linux'
+      uses: rui314/setup-mold@v1
+      with:
+        make-default: false
+
+    - if: inputs.target-triple-sys == 'linux'
+      id: discover-ubuntu-codename
+      shell: bash
+      run: echo "codename=$(lsb_release -cs)" >> $GITHUB_OUTPUT
+
+    - if: inputs.target-triple-sys == 'linux'
+      shell: bash
+      run: |
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        echo "deb     [arch=amd64,i386] http://apt.llvm.org/${{ steps.discover-ubuntu-codename.outputs.codename }}/ llvm-toolchain-${{ steps.discover-ubuntu-codename.outputs.codename }}-${{ inputs.llvm-version-major }} main" | sudo tee --append /etc/apt/sources.list.d/llvm.list
+        echo "deb-src [arch=amd64,i386] http://apt.llvm.org/${{ steps.discover-ubuntu-codename.outputs.codename }}/ llvm-toolchain-${{ steps.discover-ubuntu-codename.outputs.codename }}-${{ inputs.llvm-version-major }} main" | sudo tee --append /etc/apt/sources.list.d/llvm.list
+
+    - if: inputs.target-triple-sys == 'linux' && inputs.target-triple-arch != 'x86_64'
+      shell: bash
+      run: sudo dpkg --add-architecture ${{ inputs.target-triple-arch-debian }}
+
+    - if: inputs.target-triple-sys == 'linux' && inputs.target-triple-arch != 'x86_64' && inputs.target-triple-arch != 'i686'
+      shell: bash
+      run: |
+        sudo sed -i'' -E 's/^(deb|deb-src) /\1 [arch=amd64,i386] /' /etc/apt/sources.list
+        echo "/etc/apt/sources.list:"
+        cat /etc/apt/sources.list
+
+    - if: inputs.target-triple-sys == 'linux' && inputs.target-triple-arch != 'x86_64' && inputs.target-triple-arch != 'i686'
+      shell: bash
+      run: |
+        echo "deb [arch=${{ inputs.target-triple-arch-debian }}] http://ports.ubuntu.com/ubuntu-ports/ ${{ steps.discover-ubuntu-codename.outputs.codename }} main restricted"                               | sudo tee --append /etc/apt/sources.list.d/${{ inputs.target-triple-arch-debian }}.list
+        echo "deb [arch=${{ inputs.target-triple-arch-debian }}] http://ports.ubuntu.com/ubuntu-ports/ ${{ steps.discover-ubuntu-codename.outputs.codename }}-updates main restricted"                       | sudo tee --append /etc/apt/sources.list.d/${{ inputs.target-triple-arch-debian }}.list
+        echo "deb [arch=${{ inputs.target-triple-arch-debian }}] http://ports.ubuntu.com/ubuntu-ports/ ${{ steps.discover-ubuntu-codename.outputs.codename }} universe"                                      | sudo tee --append /etc/apt/sources.list.d/${{ inputs.target-triple-arch-debian }}.list
+        echo "deb [arch=${{ inputs.target-triple-arch-debian }}] http://ports.ubuntu.com/ubuntu-ports/ ${{ steps.discover-ubuntu-codename.outputs.codename }}-updates universe"                              | sudo tee --append /etc/apt/sources.list.d/${{ inputs.target-triple-arch-debian }}.list
+        echo "deb [arch=${{ inputs.target-triple-arch-debian }}] http://ports.ubuntu.com/ubuntu-ports/ ${{ steps.discover-ubuntu-codename.outputs.codename }} multiverse"                                    | sudo tee --append /etc/apt/sources.list.d/${{ inputs.target-triple-arch-debian }}.list
+        echo "deb [arch=${{ inputs.target-triple-arch-debian }}] http://ports.ubuntu.com/ubuntu-ports/ ${{ steps.discover-ubuntu-codename.outputs.codename }}-updates multiverse"                            | sudo tee --append /etc/apt/sources.list.d/${{ inputs.target-triple-arch-debian }}.list
+        echo "deb [arch=${{ inputs.target-triple-arch-debian }}] http://ports.ubuntu.com/ubuntu-ports/ ${{ steps.discover-ubuntu-codename.outputs.codename }}-backports main restricted universe multiverse" | sudo tee --append /etc/apt/sources.list.d/${{ inputs.target-triple-arch-debian }}.list
+        echo "deb [arch=${{ inputs.target-triple-arch-debian }}] http://ports.ubuntu.com/ubuntu-ports/ ${{ steps.discover-ubuntu-codename.outputs.codename }}-security main restricted"                      | sudo tee --append /etc/apt/sources.list.d/${{ inputs.target-triple-arch-debian }}.list
+        echo "deb [arch=${{ inputs.target-triple-arch-debian }}] http://ports.ubuntu.com/ubuntu-ports/ ${{ steps.discover-ubuntu-codename.outputs.codename }}-security universe"                             | sudo tee --append /etc/apt/sources.list.d/${{ inputs.target-triple-arch-debian }}.list
+        echo "deb [arch=${{ inputs.target-triple-arch-debian }}] http://ports.ubuntu.com/ubuntu-ports/ ${{ steps.discover-ubuntu-codename.outputs.codename }}-security multiverse"                           | sudo tee --append /etc/apt/sources.list.d/${{ inputs.target-triple-arch-debian }}.list
+        echo "/etc/apt/sources.list.d/${{ inputs.target-triple-arch-debian }}.list:"
+        cat /etc/apt/sources.list.d/${{ inputs.target-triple-arch-debian }}.list
+
+    - if: inputs.target-triple-sys == 'linux'
+      shell: bash
+      run: sudo apt-get update
+
+    - if: inputs.target-triple-sys == 'linux'
+      shell: bash
+      run: |
+        sudo apt install -y \
+          clang-17 \
+          lld-17 \
+          qemu-user-static \
+          libc6:${{ inputs.target-triple-arch-debian }} \
+          libc6-dev:${{ inputs.target-triple-arch-debian }} \
+          libgcc-12-dev:${{ inputs.target-triple-arch-debian }} \
+          libgcc-s1:${{ inputs.target-triple-arch-debian }} \
+          libstdc++-12-dev:${{ inputs.target-triple-arch-debian }} \
+          linux-libc-dev:${{ inputs.target-triple-arch-debian }} \
+          uuid-dev:${{ inputs.target-triple-arch-debian }}
+
+    - if: inputs.target-triple-sys == 'windows'
+      shell: pwsh
+      run: |
+        iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
+        Join-Path (Resolve-Path ~).Path "scoop\shims" >> $env:GITHUB_PATH
+
+    - if: inputs.target-triple-sys == 'windows'
+      shell: pwsh
+      run: scoop install ccache cmake ninja llvm
+
+    - uses: actions/cache/restore@v3
+      with:
+        path: .ccache
+        key: ${{ inputs.target-triple-arch }}-${{ inputs.target-triple-sys }}-${{ env.TOOLCHAINS_RELEASE_KEY }}-${{ github.run_id }}
+        restore-keys: |
+          ${{ inputs.target-triple-arch }}-${{ inputs.target-triple-sys }}-${{ env.TOOLCHAINS_RELEASE_KEY }}
+          ${{ inputs.target-triple-arch }}-${{ inputs.target-triple-sys }}
+
+    - shell: bash
+      run: |
+        ccache --set-config=cache_dir="$(pwd)/.ccache"
+        ccache --set-config=compiler_check=content
+        ccache --set-config=compression=false
+        ccache --set-config=hash_dir=false
+        # ccache --set-config=log_file="$(pwd)/.ccache.log"
+        ccache --set-config=sloppiness="include_file_ctime,include_file_mtime,locale,modules,pch_defines,random_seed,system_headers,time_macros"
+        ccache --show-config
+        ccache --zero-stats
+
+    - id: toolchains-configure
+      shell: bash
+      run: |
+        cmake \
+          --preset=release \
+          "-DTOOLCHAINS_TARGET_ARCH=${{ inputs.target-triple-arch }}" \
+          "-DTOOLCHAINS_ENABLE_SWIFT=${{ inputs.toolchain-variant == 'swift' && 'ON' || 'OFF' }}" \
+          "-DTOOLCHAINS_RELEASE_REV=${{ env.TOOLCHAINS_RELEASE_REV }}"
+
+    - id: toolchains-build
+      shell: bash
+      run: ./scripts/cmake-tail.sh --build --preset=release
+
+    - id: toolchains-test
+      shell: bash
+      run: ./scripts/ctest-tail.sh --preset=release
+      continue-on-error: true
+
+    - shell: bash
+      run: ccache --evict-older-than $(($(date +%s) - $(cat ./.github/start_time)))s
+
+    - shell: bash
+      run: |
+        ccache --show-stats --verbose
+        # cat .ccache.log
+
+    # NOTE: only save a new cache for pushes; skip for pull requests
+    - if: github.event_name == 'push'
+      uses: actions/cache/save@v3
+      with:
+        path: .ccache
+        key: ${{ inputs.target-triple-arch }}-${{ inputs.target-triple-sys }}-${{ env.TOOLCHAINS_RELEASE_KEY }}-${{ github.run_id }}
+
+    # NOTE: delete the prior relevant caches after uploading the current one
+    - if: github.event_name == 'push'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        GITHUB_RUN_ID: ${{ github.run_id }}
+        TARGET_TRIPLE_ARCH: ${{ inputs.target-triple-arch }}
+        TARGET_TRIPLE_SYS: ${{ inputs.target-triple-sys }}
+        TOOLCHAINS_RELEASE_KEY: ${{ env.TOOLCHAINS_RELEASE_KEY }}
+      run: bash ./scripts/prune-github-caches.sh
+
+    - if: github.event_name == 'push'
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ inputs.github-token }}
+        file: dist/*
+        file_glob: true
+        tag: ${{ env.TOOLCHAINS_RELEASE_BRANCH }}+rev${{ env.TOOLCHAINS_RELEASE_REV }}
+        overwrite: true

@@ -1,0 +1,111 @@
+Add options for statically linking specific Swift libraries
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ CMakeLists.txt                       |   18 +++++++++++++++++-
+ lib/SwiftDemangle/CMakeLists.txt     |    7 ++++++-
+ tools/libMockPlugin/CMakeLists.txt   |    7 ++++++-
+ tools/libStaticMirror/CMakeLists.txt |    7 ++++++-
+ tools/libSwiftScan/CMakeLists.txt    |    7 ++++++-
+ 5 files changed, 41 insertions(+), 5 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index a75e0da7..768b3339 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -221,7 +221,23 @@ option(SWIFT_BUILD_DYNAMIC_STDLIB
+ option(SWIFT_BUILD_STATIC_STDLIB
+     "Build static variants of the Swift standard library"
+     FALSE)
+-    
++
++option(SWIFT_BUILD_STATIC_DEMANGLE
++    "Build the Swift Demangle Library as a static library"
++    FALSE)
++
++option(SWIFT_BUILD_STATIC_MOCK_PLUGIN
++    "Build the Swift Mock Plugin Library as a static library"
++    FALSE)
++
++option(SWIFT_BUILD_STATIC_SCAN
++    "Build the Swift Scan Library as a static library"
++    FALSE)
++
++option(SWIFT_BUILD_STATIC_STATIC_MIRROR
++    "Build the Swift Static Mirror Library as a static library"
++    FALSE)
++
+ option(SWIFT_STDLIB_STATIC_PRINT
+     "Build compile-time evaluated vprintf()"
+     FALSE)
+diff --git a/lib/SwiftDemangle/CMakeLists.txt b/lib/SwiftDemangle/CMakeLists.txt
+index 864bea94..cb0d8c5b 100644
+--- a/lib/SwiftDemangle/CMakeLists.txt
++++ b/lib/SwiftDemangle/CMakeLists.txt
+@@ -1,4 +1,9 @@
+-add_swift_host_library(swiftDemangle SHARED
++if(SWIFT_BUILD_STATIC_DEMANGLE)
++  set(swift_demangle_library_kind STATIC)
++else()
++  set(swift_demangle_library_kind SHARED)
++endif()
++add_swift_host_library(swiftDemangle ${swift_demangle_library_kind}
+   SwiftDemangle.cpp
+   MangleHack.cpp)
+ target_compile_definitions(swiftDemangle PRIVATE
+diff --git a/tools/libMockPlugin/CMakeLists.txt b/tools/libMockPlugin/CMakeLists.txt
+index ff85bc17..ca050742 100644
+--- a/tools/libMockPlugin/CMakeLists.txt
++++ b/tools/libMockPlugin/CMakeLists.txt
+@@ -3,7 +3,12 @@ set(MOCK_PLUGIN_LIB_NAME "_swiftMockPlugin")
+ set(LLVM_EXPORTED_SYMBOL_FILE
+     ${CMAKE_CURRENT_SOURCE_DIR}/libMockPlugin.exports)
+ 
+-add_swift_host_library(libMockPlugin SHARED
++if(SWIFT_BUILD_STATIC_MOCK_PLUGIN)
++  set(swift_mock_plugin_library_kind STATIC)
++else()
++  set(swift_mock_plugin_library_kind SHARED)
++endif()
++add_swift_host_library(libMockPlugin ${swift_mock_plugin_library_kind}
+   MockPlugin.cpp
+   c-include-check.c
+   LLVM_LINK_COMPONENTS support)
+diff --git a/tools/libStaticMirror/CMakeLists.txt b/tools/libStaticMirror/CMakeLists.txt
+index 1b8c563b..a6ce8737 100644
+--- a/tools/libStaticMirror/CMakeLists.txt
++++ b/tools/libStaticMirror/CMakeLists.txt
+@@ -4,7 +4,12 @@ set(SWIFT_SCAN_LIB_NAME "_InternalSwiftStaticMirror")
+ set(LLVM_EXPORTED_SYMBOL_FILE
+     ${CMAKE_CURRENT_SOURCE_DIR}/libStaticMirror.exports)
+ 
+-add_swift_host_library(libStaticMirror SHARED
++if(SWIFT_BUILD_STATIC_MOCK_PLUGIN)
++  set(swift_mock_plugin_library_kind STATIC)
++else()
++  set(swift_mock_plugin_library_kind SHARED)
++endif()
++add_swift_host_library(libStaticMirror ${swift_mock_plugin_library_kind}
+   libStaticMirror.cpp
+   c-include-check.c
+   LLVM_LINK_COMPONENTS object support
+diff --git a/tools/libSwiftScan/CMakeLists.txt b/tools/libSwiftScan/CMakeLists.txt
+index 78a6169b..2ba13e1e 100644
+--- a/tools/libSwiftScan/CMakeLists.txt
++++ b/tools/libSwiftScan/CMakeLists.txt
+@@ -4,7 +4,12 @@ set(SWIFT_SCAN_LIB_NAME "_InternalSwiftScan")
+ set(LLVM_EXPORTED_SYMBOL_FILE
+     ${CMAKE_CURRENT_SOURCE_DIR}/libSwiftScan.exports)
+ 
+-add_swift_host_library(libSwiftScan SHARED
++if(SWIFT_BUILD_STATIC_SCAN)
++  set(swift_scan_library_kind STATIC)
++else()
++  set(swift_scan_library_kind SHARED)
++endif()
++add_swift_host_library(libSwiftScan ${swift_scan_library_kind}
+   libSwiftScan.cpp
+   c-include-check.c
+   HAS_SWIFT_MODULES)

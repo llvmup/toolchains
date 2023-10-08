@@ -1,0 +1,99 @@
+name: build
+
+on:
+  push:
+    branches:
+      - "releases/llvmorg-[0-9]+.[0-9]+.[0-9]+"
+      - "releases/swift-[0-9]+.[0-9]+.[0-9]+"
+      - "releases/swift-[0-9]+.[0-9]+"
+  pull_request:
+    branches:
+      - "releases/llvmorg-[0-9]+.[0-9]+.[0-9]+"
+      - "releases/swift-[0-9]+.[0-9]+.[0-9]+"
+      - "releases/swift-[0-9]+.[0-9]+"
+
+concurrency:
+  group: ${{ github.workflow }}
+
+env:
+  LLVM_VERSION_MAJOR: 17
+
+jobs:
+  build:
+    permissions:
+      actions: write
+      contents: write
+    strategy:
+      matrix:
+        toolchain-variant: [llvmorg, swift]
+        os: [macos-13, ubuntu-latest, windows-latest]
+        triple-arch: [aarch64, armv7, i686, powerpc64le, riscv64, s390x, x86_64]
+        include:
+          - { os: macos-13, triple-sys: macos }
+          - { os: ubuntu-latest, triple-sys: linux }
+          - { os: windows-latest, triple-sys: windows }
+          - {
+              os: ubuntu-latest,
+              triple-arch: aarch64,
+              triple-arch-debian: arm64,
+            }
+          - { os: ubuntu-latest, triple-arch: armv7, triple-arch-debian: armhf }
+          - { os: ubuntu-latest, triple-arch: i686, triple-arch-debian: i386 }
+          - {
+              os: ubuntu-latest,
+              triple-arch: powerpc64le,
+              triple-arch-debian: ppc64el,
+            }
+          - {
+              os: ubuntu-latest,
+              triple-arch: riscv64,
+              triple-arch-debian: riscv64,
+            }
+          - { os: ubuntu-latest, triple-arch: s390x, triple-arch-debian: s390x }
+          - {
+              os: ubuntu-latest,
+              triple-arch: x86_64,
+              triple-arch-debian: amd64,
+            }
+        exclude:
+          - { os: macos-13, triple-arch: armv7 }
+          - { os: macos-13, triple-arch: i686 }
+          - { os: macos-13, triple-arch: powerpc64le }
+          - { os: macos-13, triple-arch: riscv64 }
+          - { os: macos-13, triple-arch: s390x }
+          - { os: windows-latest, triple-arch: armv7 }
+          - { os: windows-latest, triple-arch: i686 }
+          - { os: windows-latest, triple-arch: powerpc64le }
+          - { os: windows-latest, triple-arch: riscv64 }
+          - { os: windows-latest, triple-arch: s390x }
+          - { toolchain-variant: swift, triple-arch: i686 }
+          - { toolchain-variant: swift, triple-arch: riscv64 }
+    runs-on: ${{ matrix.os }}
+    # concurrency:
+    #   group: ${{ matrix.os }}
+    steps:
+      - if: matrix.triple-sys == 'windows'
+        shell: bash
+        run: |
+          git config --global core.symlinks true
+          git config --global core.longpaths true
+      - if:
+          (matrix.toolchain-variant == 'swift'   && (startsWith(github.ref, 'refs/heads/releases/swift'  ) || startsWith(github.base_ref, 'refs/heads/releases/swift'  ))) ||
+          (matrix.toolchain-variant == 'llvmorg' && (startsWith(github.ref, 'refs/heads/releases/llvmorg') || startsWith(github.base_ref, 'refs/heads/releases/llvmorg')))
+        uses: actions/checkout@v4
+        with:
+          # NOTE: `fetch-depth: 0` is required to fetch tags. See https://github.com/actions/checkout/issues/1471
+          fetch-depth: 0
+          fetch-tags: true
+          filter: tree:0
+      - if:
+          (matrix.toolchain-variant == 'swift'   && (startsWith(github.ref, 'refs/heads/releases/swift'  ) || startsWith(github.base_ref, 'refs/heads/releases/swift'  ))) ||
+          (matrix.toolchain-variant == 'llvmorg' && (startsWith(github.ref, 'refs/heads/releases/llvmorg') || startsWith(github.base_ref, 'refs/heads/releases/llvmorg')))
+        uses: ./.github/actions/build-distributions
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          llvm-version-major: ${{ env.LLVM_VERSION_MAJOR }}
+          toolchain-variant: ${{ matrix.toolchain-variant }}
+          target-triple-arch: ${{ matrix.triple-arch }}
+          target-triple-arch-debian: ${{ matrix.triple-arch-debian }}
+          target-triple-sys: ${{ matrix.triple-sys }}

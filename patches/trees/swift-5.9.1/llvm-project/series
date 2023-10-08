@@ -1,0 +1,13 @@
+# This series applies on Git commit 957486dbb448cbee7efa05803502b9da51aa4f95
+01-llvm-rename-cmake-exports-with-llvm-prefix.patch
+02-llvm-export-library-properties.patch
+03-llvm-install-license.patch
+04-mlir-export-library-properties.patch
+05-mlir-install-license.patch
+06-clang-export-library-properties.patch
+07-clang-install-license.patch
+08-clang-install-modulemaps-with-headers.patch
+09-lld-install-license.patch
+10-llvm-add-options-for-static-libraries.patch
+11-mlir-disable-shared-runtimes-unless-pic-enabled.patch
+12-clang-remove-indexstore-exports-needing-blocks-runtime.patch

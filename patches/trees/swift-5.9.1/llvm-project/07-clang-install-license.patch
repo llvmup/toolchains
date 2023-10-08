@@ -1,0 +1,30 @@
+Install the Clang license file
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ clang/CMakeLists.txt |   10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/clang/CMakeLists.txt b/clang/CMakeLists.txt
+index 875bd27e1..abd672b6a 100644
+--- a/clang/CMakeLists.txt
++++ b/clang/CMakeLists.txt
+@@ -991,6 +991,16 @@ if (LLVM_ADD_NATIVE_VISUALIZERS_TO_SOLUTION)
+ endif()
+ add_subdirectory(utils/hmaptool)
+ 
++add_custom_target(clang-license)
++add_llvm_install_targets(install-clang-license
++  DEPENDS clang-license
++  COMPONENT clang-license
++)
++install(FILES "LICENSE.TXT"
++  DESTINATION "share/clang"
++  COMPONENT clang-license
++)
++
+ if(CLANG_BUILT_STANDALONE)
+   llvm_distribution_add_targets()
+   process_llvm_pass_plugins()

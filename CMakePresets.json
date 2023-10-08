@@ -1,0 +1,44 @@
+{
+  "version": 7,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 27,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/b",
+      "warnings": {
+        "dev": true,
+        "deprecated": true,
+        "uninitialized": true,
+        "unusedCli": true,
+        "systemVars": false
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "cleanFirst": false
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "execution": {
+        "jobs": 1,
+        "stopOnFailure": true
+      },
+      "output": {
+        "outputLogFile": "${sourceDir}/b/ctest/release.log",
+        "outputOnFailure": true,
+        "verbosity": "extra"
+      }
+    }
+  ]
+}

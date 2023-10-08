@@ -1,0 +1,33 @@
+Install the Swift features file
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ lib/Option/CMakeLists.txt |   14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/lib/Option/CMakeLists.txt b/lib/Option/CMakeLists.txt
+index 8659377a..678c8472 100644
+--- a/lib/Option/CMakeLists.txt
++++ b/lib/Option/CMakeLists.txt
+@@ -26,12 +26,12 @@ add_custom_target(swift-features-file DEPENDS ${features_file_dest})
+ 
+ add_dependencies(swiftOption swift-features-file)
+ 
+-swift_install_in_component(
+-  FILES
+-    ${features_file_dest}
+-  DESTINATION
+-    "share/swift"
+-  COMPONENT
+-    compiler
++install(FILES ${features_file_dest}
++  DESTINATION "share/swift"
++  COMPONENT swift-features-file
+ )
+ 
++add_llvm_install_targets("install-swift-features-file"
++  DEPENDS swift-features-file
++  COMPONENT swift-features-file
++)

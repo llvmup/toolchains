@@ -1,0 +1,29 @@
+Install the Clang modulemaps alongside the headers
+
+From: silvanshade <silvanshade@users.noreply.github.com>
+
+
+---
+ clang/CMakeLists.txt |    9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/clang/CMakeLists.txt b/clang/CMakeLists.txt
+index abd672b6a..d7b8ddad2 100644
+--- a/clang/CMakeLists.txt
++++ b/clang/CMakeLists.txt
+@@ -396,6 +396,15 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+     PATTERN "*.h"
+     )
+ 
++  if (LLVM_INSTALL_MODULEMAPS)
++    install(DIRECTORY include/clang
++            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
++            COMPONENT clang-headers
++            FILES_MATCHING
++            PATTERN "module.modulemap"
++            )
++  endif(LLVM_INSTALL_MODULEMAPS)
++
+   # Installing the headers needs to depend on generating any public
+   # tablegen'd headers.
+   add_custom_target(clang-headers DEPENDS clang-tablegen-targets)

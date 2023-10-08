@@ -1,0 +1,4 @@
+# This series applies on Git commit e404b3e6afffee6496bd9db970360163f3663844
+01-cmark-install-static-libraries.patch
+02-cmark-install-headers.patch
+03-cmark-install-cmake-exports.patch
